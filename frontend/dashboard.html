@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — TaskVault</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#07080f;--surface:#0e0f1a;--surface2:#12131f;--border:#1c1d2e;
+  --accent:#4f8ef7;--accent2:#a78bfa;--accent-glow:rgba(79,142,247,0.14);
+  --text:#eceaf4;--muted:#5a5870;--error:#f06a6a;--success:#52c98a;--warn:#f0a96a;
+}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;font-size:14px}
+
+/* ── Sidebar ── */
+.sidebar{width:230px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:0;position:sticky;top:0;height:100vh;overflow-y:auto}
+.sb-top{padding:26px 20px 22px;border-bottom:1px solid var(--border)}
+.brand{display:flex;align-items:center;gap:9px}
+.brand-mark{width:30px;height:30px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.brand-name{font-family:'Syne',sans-serif;font-size:17px;font-weight:700}
+
+.nav{padding:18px 10px;flex:1}
+.nav-group{margin-bottom:24px}
+.nav-group-label{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);padding:0 10px;margin-bottom:6px;display:block}
+.nav-item{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:8px;font-size:13px;color:var(--muted);cursor:pointer;transition:all .15s;text-decoration:none;margin-bottom:2px;position:relative}
+.nav-item .ni{font-size:15px;width:20px;text-align:center}
+.nav-item:hover{background:var(--border);color:var(--text)}
+.nav-item.active{background:var(--accent-glow);color:var(--accent);border:1px solid rgba(79,142,247,.15)}
+.nav-item .badge{margin-left:auto;background:var(--accent);color:#fff;font-size:10px;padding:1px 7px;border-radius:10px;font-weight:500}
+.nav-item .badge.admin{background:linear-gradient(135deg,#f0a96a,#f06a6a)}
+
+.sb-footer{padding:14px 10px;border-top:1px solid var(--border)}
+.user-card{display:flex;align-items:center;gap:9px;padding:10px;border-radius:9px;cursor:pointer;transition:background .15s}
+.user-card:hover{background:var(--border)}
+.ava{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#fff;flex-shrink:0}
+.uc-info{flex:1;min-width:0}
+.uc-name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.uc-role{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.logout-btn{background:none;border:none;cursor:pointer;color:var(--muted);font-size:14px;transition:color .15s;padding:4px}
+.logout-btn:hover{color:var(--error)}
+
+/* ── Main ── */
+.main{flex:1;overflow-y:auto;padding:32px 36px;min-width:0}
+
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:32px}
+.page-title{font-family:'Syne',sans-serif;font-size:24px;font-weight:700;letter-spacing:-0.02em}
+.page-sub{font-size:12px;color:var(--muted);margin-top:3px}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.search{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:9px 13px}
+.search input{background:none;border:none;outline:none;color:var(--text);font-family:'Outfit',sans-serif;font-size:13px;width:150px}
+.search input::placeholder{color:var(--muted)}
+
+/* Stats */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:26px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;transition:border-color .2s;animation:fadeUp .4s ease both}
+.stat:hover{border-color:rgba(79,142,247,.25)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.stat:nth-child(1){animation-delay:.05s}.stat:nth-child(2){animation-delay:.1s}.stat:nth-child(3){animation-delay:.15s}.stat:nth-child(4){animation-delay:.2s}
+.stat-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.stat-lbl{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.stat-icon{font-size:16px}
+.stat-val{font-family:'Syne',sans-serif;font-size:28px;font-weight:700;margin-bottom:4px}
+.stat-sub{font-size:11px;color:var(--muted)}
+.stat-sub.up{color:var(--success)}.stat-sub.warn{color:var(--warn)}
+
+/* Content area */
+.content-grid{display:grid;grid-template-columns:1fr 320px;gap:20px}
+
+/* Task panel */
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:13px;padding:22px;animation:fadeUp .4s .25s ease both}
+.panel-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.panel-title{font-size:14px;font-weight:600}
+.panel-sub{font-size:11px;color:var(--muted);margin-top:2px}
+.btn-add{display:flex;align-items:center;gap:6px;padding:8px 14px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;border-radius:8px;font-family:'Outfit',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:opacity .2s,transform .15s;box-shadow:0 2px 12px rgba(79,142,247,.25)}
+.btn-add:hover{opacity:.88;transform:translateY(-1px)}
+
+/* Task list */
+.task-list{display:flex;flex-direction:column;gap:10px}
+.task-item{display:flex;align-items:flex-start;gap:12px;padding:13px 14px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;transition:border-color .2s,background .2s;animation:fadeUp .3s ease both}
+.task-item:hover{border-color:rgba(79,142,247,.2);background:#141524}
+.task-chk{width:18px;height:18px;accent-color:var(--accent);cursor:pointer;margin-top:2px;flex-shrink:0}
+.task-body{flex:1;min-width:0}
+.task-title{font-size:13.5px;font-weight:500;margin-bottom:3px}
+.task-title.done{text-decoration:line-through;color:var(--muted)}
+.task-desc{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:380px}
+.task-meta{display:flex;align-items:center;gap:8px;margin-top:6px}
+.status-pill{padding:3px 9px;border-radius:20px;font-size:10px;font-weight:500;letter-spacing:.04em;text-transform:capitalize}
+.status-pill.pending   {background:rgba(240,169,106,.1);color:var(--warn);border:1px solid rgba(240,169,106,.2)}
+.status-pill.in-progress{background:rgba(79,142,247,.1);color:var(--accent);border:1px solid rgba(79,142,247,.2)}
+.status-pill.completed {background:rgba(82,201,138,.1);color:var(--success);border:1px solid rgba(82,201,138,.2)}
+.task-date{font-size:11px;color:var(--muted)}
+.task-actions{display:flex;gap:6px;flex-shrink:0}
+.tact-btn{background:none;border:1px solid var(--border);border-radius:7px;padding:5px 9px;font-size:12px;cursor:pointer;color:var(--muted);transition:all .15s}
+.tact-btn:hover.edit{border-color:var(--accent);color:var(--accent);background:var(--accent-glow)}
+.tact-btn:hover.del{border-color:var(--error);color:var(--error);background:rgba(240,106,106,.08)}
+.tact-btn.del.hidden{display:none}
+
+.empty-state{text-align:center;padding:48px 20px;color:var(--muted)}
+.empty-state .em-icon{font-size:40px;margin-bottom:12px;opacity:.4}
+.empty-state p{font-size:13px}
+
+/* Skeleton */
+.skel{background:linear-gradient(90deg,#12131f 25%,#1a1b2e 50%,#12131f 75%);background-size:200% 100%;animation:shimmer 1.4s infinite;border-radius:8px;height:72px;margin-bottom:10px}
+@keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+/* Right column */
+.right-col{display:flex;flex-direction:column;gap:16px}
+
+/* Create/Edit form */
+.form-panel{background:var(--surface);border:1px solid var(--border);border-radius:13px;padding:20px;animation:fadeUp .4s .3s ease both}
+.fp-title{font-size:13px;font-weight:600;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.fp-title span{font-size:16px}
+.fp-field{margin-bottom:13px}
+.fp-field label{display:block;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;font-weight:500}
+.fp-field input,.fp-field textarea,.fp-field select{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:13px;font-family:'Outfit',sans-serif;color:var(--text);outline:none;transition:border-color .18s,box-shadow .18s;resize:none}
+.fp-field input::placeholder,.fp-field textarea::placeholder{color:var(--muted)}
+.fp-field input:focus,.fp-field textarea:focus,.fp-field select:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow)}
+.fp-field select option{background:var(--surface)}
+.fp-btns{display:flex;gap:8px}
+.fp-btn{flex:1;padding:10px;border:none;border-radius:8px;font-family:'Outfit',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all .15s}
+.fp-btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;box-shadow:0 2px 12px rgba(79,142,247,.22)}
+.fp-btn.primary:hover{opacity:.88;transform:translateY(-1px)}
+.fp-btn.primary:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.fp-btn.secondary{background:var(--border);color:var(--muted)}
+.fp-btn.secondary:hover{color:var(--text)}
+
+/* Token info */
+.token-panel{background:var(--surface);border:1px solid var(--border);border-radius:13px;padding:18px;animation:fadeUp .4s .35s ease both}
+.token-panel h4{font-size:12px;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:6px;color:var(--muted)}
+.token-val{font-size:10px;color:#4f8ef780;word-break:break-all;font-family:monospace;line-height:1.5;background:var(--surface2);padding:8px 10px;border-radius:7px;border:1px solid var(--border)}
+
+/* Toast */
+.toast{position:fixed;bottom:22px;right:22px;padding:11px 15px;border-radius:10px;font-size:13px;display:flex;align-items:center;gap:8px;transform:translateY(70px);opacity:0;transition:all .3s ease;z-index:9999;box-shadow:0 8px 30px rgba(0,0,0,.5)}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success{background:#132219;border:1px solid rgba(82,201,138,.25);color:var(--success)}
+.toast.error{background:#231313;border:1px solid rgba(240,106,106,.25);color:var(--error)}
+.toast.info{background:#131826;border:1px solid rgba(79,142,247,.25);color:var(--accent)}
+
+/* Modal */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);z-index:500;display:none;align-items:center;justify-content:center}
+.modal-bg.show{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:28px;width:100%;max-width:360px;animation:pop .3s ease}
+@keyframes pop{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:scale(1)}}
+.modal h3{font-family:'Syne',sans-serif;font-size:18px;margin-bottom:8px}
+.modal p{font-size:13px;color:var(--muted);margin-bottom:22px;line-height:1.6}
+.modal-btns{display:flex;gap:10px}
+.modal-btns button{flex:1;padding:11px;border:none;border-radius:9px;font-family:'Outfit',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all .15s}
+.modal-btns .m-cancel{background:var(--border);color:var(--muted)}
+.modal-btns .m-cancel:hover{color:var(--text)}
+.modal-btns .m-confirm{background:var(--error);color:#fff}
+.modal-btns .m-confirm:hover{opacity:.85}
+
+@media(max-width:1100px){.content-grid{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:800px){.sidebar{display:none}.main{padding:20px 16px}}
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sb-top">
+    <div class="brand">
+      <div class="brand-mark">⚡</div>
+      <span class="brand-name">TaskVault</span>
+    </div>
+  </div>
+  <nav class="nav">
+    <div class="nav-group">
+      <span class="nav-group-label">Main</span>
+      <a class="nav-item active" href="#"><span class="ni">⬛</span> Dashboard</a>
+      <a class="nav-item" href="#"><span class="ni">✅</span> My Tasks <span class="badge" id="task-count-badge">—</span></a>
+      <a class="nav-item" href="#"><span class="ni">📊</span> Analytics</a>
+    </div>
+    <div class="nav-group">
+      <span class="nav-group-label">Account</span>
+      <a class="nav-item" id="admin-link" href="#" style="display:none"><span class="ni">👑</span> Admin Panel <span class="badge admin">Admin</span></a>
+      <a class="nav-item" href="http://localhost:5000/api-docs" target="_blank"><span class="ni">📖</span> Swagger Docs</a>
+      <a class="nav-item" href="#"><span class="ni">⚙️</span> Settings</a>
+    </div>
+  </nav>
+  <div class="sb-footer">
+    <div class="user-card">
+      <div class="ava" id="sb-ava">?</div>
+      <div class="uc-info">
+        <div class="uc-name" id="sb-name">Loading…</div>
+        <div class="uc-role" id="sb-role">—</div>
+      </div>
+      <button class="logout-btn" onclick="logout()" title="Sign out">⎋</button>
+    </div>
+  </div>
+</aside>
+
+<!-- Main -->
+<main class="main">
+  <div class="topbar">
+    <div>
+      <h1 class="page-title" id="page-greeting">Dashboard</h1>
+      <p class="page-sub" id="page-sub">Loading your workspace…</p>
+    </div>
+    <div class="topbar-right">
+      <div class="search">
+        <span style="color:var(--muted)">🔍</span>
+        <input type="text" placeholder="Filter tasks…" id="search-input" oninput="filterTasks()">
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-hd"><span class="stat-lbl">Total Tasks</span><span class="stat-icon">📋</span></div>
+      <div class="stat-val" id="s-total">—</div>
+      <div class="stat-sub">in your workspace</div>
+    </div>
+    <div class="stat">
+      <div class="stat-hd"><span class="stat-lbl">Completed</span><span class="stat-icon">✅</span></div>
+      <div class="stat-val" id="s-done">—</div>
+      <div class="stat-sub up" id="s-done-pct">—</div>
+    </div>
+    <div class="stat">
+      <div class="stat-hd"><span class="stat-lbl">In Progress</span><span class="stat-icon">⚡</span></div>
+      <div class="stat-val" id="s-prog">—</div>
+      <div class="stat-sub">active right now</div>
+    </div>
+    <div class="stat">
+      <div class="stat-hd"><span class="stat-lbl">Pending</span><span class="stat-icon">🕐</span></div>
+      <div class="stat-val" id="s-pend">—</div>
+      <div class="stat-sub warn">needs attention</div>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="content-grid">
+    <!-- Task list -->
+    <div class="panel">
+      <div class="panel-hd">
+        <div>
+          <div class="panel-title">My Tasks</div>
+          <div class="panel-sub" id="task-list-sub">Loading…</div>
+        </div>
+        <button class="btn-add" onclick="startCreate()">＋ New Task</button>
+      </div>
+
+      <!-- Filter tabs -->
+      <div style="display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap">
+        <button class="tact-btn" onclick="setFilter('all')"   id="tab-all"        style="border-color:var(--accent);color:var(--accent)">All</button>
+        <button class="tact-btn" onclick="setFilter('pending')"      id="tab-pending">Pending</button>
+        <button class="tact-btn" onclick="setFilter('in-progress')"  id="tab-in-progress">In Progress</button>
+        <button class="tact-btn" onclick="setFilter('completed')"    id="tab-completed">Completed</button>
+      </div>
+
+      <div id="task-list"><div class="skel"></div><div class="skel"></div><div class="skel"></div></div>
+    </div>
+
+    <!-- Right column -->
+    <div class="right-col">
+      <!-- Create / Edit form -->
+      <div class="form-panel">
+        <div class="fp-title"><span id="form-icon">✏️</span> <span id="form-title-text">New Task</span></div>
+
+        <div class="fp-field">
+          <label>Title *</label>
+          <input type="text" id="t-title" placeholder="Task title…">
+        </div>
+        <div class="fp-field">
+          <label>Description</label>
+          <textarea id="t-desc" rows="3" placeholder="Optional details…"></textarea>
+        </div>
+        <div class="fp-field">
+          <label>Status</label>
+          <select id="t-status">
+            <option value="pending">Pending</option>
+            <option value="in-progress">In Progress</option>
+            <option value="completed">Completed</option>
+          </select>
+        </div>
+        <div class="fp-btns">
+          <button class="fp-btn secondary" id="form-cancel-btn" onclick="resetForm()" style="display:none">Cancel</button>
+          <button class="fp-btn primary" id="form-submit-btn" onclick="submitTask()">Create Task</button>
+        </div>
+      </div>
+
+      <!-- JWT token display -->
+      <div class="token-panel">
+        <h4>🔑 Active JWT Token</h4>
+        <div class="token-val" id="token-display">—</div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- Delete confirm modal -->
+<div class="modal-bg" id="del-modal">
+  <div class="modal">
+    <h3>Delete Task?</h3>
+    <p>This action cannot be undone. The task will be permanently removed.</p>
+    <div class="modal-btns">
+      <button class="m-cancel" onclick="closeModal()">Cancel</button>
+      <button class="m-confirm" id="modal-confirm-btn">Delete</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API_BASE = 'http://localhost:5000/api/v1';
+
+// ── Auth guard ──────────────────────────────────────────────────
+const token = localStorage.getItem('tv_token');
+const user  = JSON.parse(localStorage.getItem('tv_user') || 'null');
+if (!token) location.href = 'login.html';
+
+const isAdmin = user?.role === 'admin';
+
+// ── Bootstrap UI ─────────────────────────────────────────────
+function initUI() {
+  const name = user?.name || user?.email || 'User';
+  const initials = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2);
+  document.getElementById('sb-ava').textContent   = initials;
+  document.getElementById('sb-name').textContent  = name;
+  document.getElementById('sb-role').textContent  = user?.role || 'user';
+  document.getElementById('page-greeting').textContent = `Good day, ${name.split(' ')[0]} 👋`;
+
+  const now = new Date();
+  document.getElementById('page-sub').textContent =
+    now.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'}) +
+    ' · ' + (isAdmin ? '👑 Admin access enabled' : '👤 Standard access');
+
+  if (isAdmin) document.getElementById('admin-link').style.display = 'flex';
+
+  // Show token (truncated)
+  const t = localStorage.getItem('tv_token') || '';
+  document.getElementById('token-display').textContent = t ? t.slice(0,60) + '…' : 'No token';
+}
+
+function logout() {
+  localStorage.removeItem('tv_token');
+  localStorage.removeItem('tv_user');
+  sessionStorage.clear();
+  location.href = 'login.html';
+}
+
+// ── API helpers ──────────────────────────────────────────────
+function authHeaders() {
+  return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` };
+}
+
+function toast(msg, type = 'info') {
+  const el = document.getElementById('toast');
+  const icons = { success:'✓', error:'✗', info:'ℹ' };
+  el.textContent = (icons[type]||'') + '  ' + msg;
+  el.className = `toast ${type} show`;
+  setTimeout(() => el.classList.remove('show'), 3400);
+}
+
+// ── Tasks state ───────────────────────────────────────────────
+let allTasks  = [];
+let curFilter = 'all';
+let editingId = null;
+
+// ── Fetch tasks ───────────────────────────────────────────────
+async function fetchTasks() {
+  try {
+    const res  = await fetch(`${API_BASE}/tasks`, { headers: authHeaders() });
+    if (res.status === 401) { logout(); return; }
+    const data = await res.json();
+    allTasks = Array.isArray(data) ? data : (data.tasks || []);
+    renderTasks();
+    updateStats();
+  } catch {
+    document.getElementById('task-list').innerHTML =
+      `<div class="empty-state"><div class="em-icon">⚠️</div><p>Could not connect to API.<br>Make sure your server is running on port 5000.</p></div>`;
+  }
+}
+
+// ── Stats ────────────────────────────────────────────────────
+function updateStats() {
+  const total = allTasks.length;
+  const done  = allTasks.filter(t => t.status === 'completed').length;
+  const prog  = allTasks.filter(t => t.status === 'in-progress').length;
+  const pend  = allTasks.filter(t => t.status === 'pending').length;
+  const pct   = total ? Math.round(done/total*100) : 0;
+
+  document.getElementById('s-total').textContent = total;
+  document.getElementById('s-done').textContent  = done;
+  document.getElementById('s-prog').textContent  = prog;
+  document.getElementById('s-pend').textContent  = pend;
+  document.getElementById('s-done-pct').textContent = total ? `${pct}% completion rate` : 'No tasks yet';
+  document.getElementById('task-count-badge').textContent = total;
+}
+
+// ── Render ────────────────────────────────────────────────────
+let currentFilterStatus = 'all';
+let searchQuery = '';
+
+function setFilter(f) {
+  currentFilterStatus = f;
+  ['all','pending','in-progress','completed'].forEach(x => {
+    const btn = document.getElementById('tab-' + x);
+    if (btn) {
+      btn.style.borderColor = x === f ? 'var(--accent)' : 'var(--border)';
+      btn.style.color       = x === f ? 'var(--accent)' : 'var(--muted)';
+    }
+  });
+  renderTasks();
+}
+
+function filterTasks() {
+  searchQuery = document.getElementById('search-input').value.toLowerCase();
+  renderTasks();
+}
+
+function renderTasks() {
+  let tasks = [...allTasks];
+  if (currentFilterStatus !== 'all') tasks = tasks.filter(t => t.status === currentFilterStatus);
+  if (searchQuery) tasks = tasks.filter(t =>
+    (t.title||'').toLowerCase().includes(searchQuery) ||
+    (t.description||'').toLowerCase().includes(searchQuery)
+  );
+
+  const sub = `${tasks.length} task${tasks.length !== 1 ? 's' : ''} shown`;
+  document.getElementById('task-list-sub').textContent = sub;
+
+  if (!tasks.length) {
+    document.getElementById('task-list').innerHTML =
+      `<div class="empty-state"><div class="em-icon">📭</div><p>${allTasks.length ? 'No tasks match your filter.' : 'No tasks yet. Create your first task →'}</p></div>`;
+    return;
+  }
+
+  document.getElementById('task-list').innerHTML = tasks.map((t, i) => `
+    <div class="task-item" style="animation-delay:${i * 0.04}s">
+      <input type="checkbox" class="task-chk" ${t.status==='completed'?'checked':''} onchange="quickToggle('${t._id}','${t.status}')">
+      <div class="task-body">
+        <div class="task-title ${t.status==='completed'?'done':''}">${esc(t.title)}</div>
+        ${t.description ? `<div class="task-desc">${esc(t.description)}</div>` : ''}
+        <div class="task-meta">
+          <span class="status-pill ${t.status}">${t.status}</span>
+          <span class="task-date">${formatDate(t.createdAt)}</span>
+        </div>
+      </div>
+      <div class="task-actions">
+        <button class="tact-btn edit" onclick="startEdit('${t._id}')">✏️</button>
+        <button class="tact-btn del ${isAdmin ? '' : 'hidden'}" onclick="confirmDelete('${t._id}','${esc(t.title)}')">🗑️</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function esc(str) { return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function formatDate(d) { return d ? new Date(d).toLocaleDateString('en-US',{month:'short',day:'numeric'}) : ''; }
+
+// ── Quick status toggle ───────────────────────────────────────
+async function quickToggle(id, currentStatus) {
+  const newStatus = currentStatus === 'completed' ? 'pending' : 'completed';
+  try {
+    const res = await fetch(`${API_BASE}/tasks/${id}`, {
+      method : 'PUT',
+      headers: authHeaders(),
+      body   : JSON.stringify({ status: newStatus })
+    });
+    if (!res.ok) throw new Error();
+    await fetchTasks();
+    toast(`Task marked as ${newStatus}`, 'success');
+  } catch { toast('Failed to update task', 'error'); await fetchTasks(); }
+}
+
+// ── Create task ───────────────────────────────────────────────
+function startCreate() {
+  resetForm();
+  document.getElementById('t-title').focus();
+}
+
+function resetForm() {
+  editingId = null;
+  document.getElementById('t-title').value  = '';
+  document.getElementById('t-desc').value   = '';
+  document.getElementById('t-status').value = 'pending';
+  document.getElementById('form-title-text').textContent = 'New Task';
+  document.getElementById('form-icon').textContent = '✏️';
+  document.getElementById('form-submit-btn').textContent = 'Create Task';
+  document.getElementById('form-cancel-btn').style.display = 'none';
+}
+
+function startEdit(id) {
+  const task = allTasks.find(t => t._id === id);
+  if (!task) return;
+  editingId = id;
+  document.getElementById('t-title').value  = task.title || '';
+  document.getElementById('t-desc').value   = task.description || '';
+  document.getElementById('t-status').value = task.status || 'pending';
+  document.getElementById('form-title-text').textContent = 'Edit Task';
+  document.getElementById('form-icon').textContent = '🔧';
+  document.getElementById('form-submit-btn').textContent = 'Save Changes';
+  document.getElementById('form-cancel-btn').style.display = '';
+  document.getElementById('t-title').focus();
+  document.querySelector('.form-panel').scrollIntoView({ behavior:'smooth', block:'nearest' });
+}
+
+async function submitTask() {
+  const title  = document.getElementById('t-title').value.trim();
+  const desc   = document.getElementById('t-desc').value.trim();
+  const status = document.getElementById('t-status').value;
+
+  if (!title) { document.getElementById('t-title').style.borderColor = 'var(--error)'; toast('Title is required', 'error'); return; }
+  document.getElementById('t-title').style.borderColor = '';
+
+  const btn = document.getElementById('form-submit-btn');
+  btn.disabled = true;
+  btn.textContent = editingId ? 'Saving…' : 'Creating…';
+
+  try {
+    let res;
+    if (editingId) {
+      res = await fetch(`${API_BASE}/tasks/${editingId}`, {
+        method : 'PUT',
+        headers: authHeaders(),
+        body   : JSON.stringify({ title, description: desc, status })
+      });
+    } else {
+      res = await fetch(`${API_BASE}/tasks`, {
+        method : 'POST',
+        headers: authHeaders(),
+        body   : JSON.stringify({ title, description: desc, status })
+      });
+    }
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Failed');
+    toast(editingId ? 'Task updated ✓' : 'Task created ✓', 'success');
+    resetForm();
+    await fetchTasks();
+  } catch (err) {
+    toast(err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = editingId ? 'Save Changes' : 'Create Task';
+  }
+}
+
+// ── Delete ───────────────────────────────────────────────────
+let deleteTargetId = null;
+
+function confirmDelete(id, title) {
+  if (!isAdmin) { toast('Only admins can delete tasks', 'error'); return; }
+  deleteTargetId = id;
+  document.getElementById('del-modal').classList.add('show');
+  document.getElementById('modal-confirm-btn').onclick = doDelete;
+}
+
+function closeModal() {
+  document.getElementById('del-modal').classList.remove('show');
+  deleteTargetId = null;
+}
+
+async function doDelete() {
+  if (!deleteTargetId) return;
+  const btn = document.getElementById('modal-confirm-btn');
+  btn.textContent = 'Deleting…'; btn.disabled = true;
+  try {
+    const res = await fetch(`${API_BASE}/tasks/${deleteTargetId}`, {
+      method : 'DELETE',
+      headers: authHeaders()
+    });
+    if (!res.ok) { const d = await res.json(); throw new Error(d.message||'Failed'); }
+    toast('Task deleted', 'success');
+    closeModal();
+    if (editingId === deleteTargetId) resetForm();
+    await fetchTasks();
+  } catch (err) {
+    toast(err.message, 'error');
+  } finally {
+    btn.textContent = 'Delete'; btn.disabled = false;
+  }
+}
+
+// Close modal on backdrop click
+document.getElementById('del-modal').addEventListener('click', e => { if (e.target.id === 'del-modal') closeModal(); });
+
+// ── Init ─────────────────────────────────────────────────────
+initUI();
+fetchTasks();
+</script>
+</body>
+</html>

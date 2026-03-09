@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sign In — TaskVault</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#07080f;--surface:#0e0f1a;--border:#1c1d2e;
+  --accent:#4f8ef7;--accent2:#a78bfa;--accent-glow:rgba(79,142,247,0.15);
+  --text:#eceaf4;--muted:#5a5870;--error:#f06a6a;--success:#52c98a;
+}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
+
+.bg-fx{position:fixed;inset:0;pointer-events:none}
+.bg-fx span{position:absolute;border-radius:50%;filter:blur(90px);animation:drift 14s ease-in-out infinite alternate}
+.bg-fx span:nth-child(1){width:600px;height:600px;background:rgba(79,142,247,0.06);top:50%;left:50%;transform:translate(-60%,-60%);animation-delay:0s}
+.bg-fx span:nth-child(2){width:400px;height:400px;background:rgba(167,139,250,0.05);bottom:-80px;right:-60px;animation-delay:-6s}
+@keyframes drift{from{transform:translate(-60%,-60%)}to{transform:translate(-58%,-62%)}}
+
+/* Dot grid */
+body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(rgba(79,142,247,0.08) 1px,transparent 1px);background-size:32px 32px;pointer-events:none}
+
+.card{position:relative;z-index:1;background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:48px 44px;width:100%;max-width:420px;box-shadow:0 40px 80px rgba(0,0,0,.5),0 0 0 1px rgba(79,142,247,.05);animation:pop .45s ease both}
+@keyframes pop{from{opacity:0;transform:scale(.96) translateY(14px)}to{opacity:1;transform:scale(1) translateY(0)}}
+
+/* Glow border on focus-within */
+.card:focus-within{border-color:rgba(79,142,247,0.25);box-shadow:0 40px 80px rgba(0,0,0,.5),0 0 0 1px rgba(79,142,247,.12),0 0 40px rgba(79,142,247,.04)}
+
+.brand{display:flex;align-items:center;gap:10px;margin-bottom:36px}
+.brand-mark{width:32px;height:32px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px}
+.brand-name{font-family:'Syne',sans-serif;font-size:18px;font-weight:700}
+
+.form-head{margin-bottom:28px}
+.form-head h1{font-family:'Syne',sans-serif;font-size:24px;font-weight:700;letter-spacing:-0.02em;margin-bottom:5px}
+.form-head p{font-size:13px;color:var(--muted)}
+.form-head a{color:var(--accent);text-decoration:none}
+.form-head a:hover{text-decoration:underline}
+
+.field{margin-bottom:16px}
+.field-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px}
+.field label{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:500}
+.forgot{font-size:12px;color:var(--accent);text-decoration:none;cursor:pointer}
+.forgot:hover{text-decoration:underline}
+.field input{width:100%;background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:9px;padding:12px 15px;font-size:14px;font-family:'Outfit',sans-serif;color:var(--text);outline:none;transition:border-color .2s,box-shadow .2s,background .2s}
+.field input::placeholder{color:var(--muted)}
+.field input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow);background:rgba(79,142,247,.02)}
+.field.err input{border-color:var(--error)}
+.field-err{font-size:11px;color:var(--error);margin-top:5px;display:none}
+.field.err .field-err{display:block}
+
+.pw-wrap{position:relative}
+.pw-wrap input{padding-right:42px}
+.pw-eye{position:absolute;right:13px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--muted);font-size:15px;transition:color .2s}
+.pw-eye:hover{color:var(--accent)}
+
+.remember{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);margin-bottom:22px;cursor:pointer}
+.remember input[type=checkbox]{width:15px;height:15px;accent-color:var(--accent);cursor:pointer}
+
+.btn{width:100%;padding:13px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;border-radius:9px;font-family:'Outfit',sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:opacity .2s,transform .15s,box-shadow .2s;box-shadow:0 4px 20px rgba(79,142,247,0.28);margin-bottom:20px;position:relative}
+.btn:hover{opacity:.88;transform:translateY(-1px);box-shadow:0 8px 28px rgba(79,142,247,.32)}
+.btn:active{transform:translateY(0)}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.spinner{display:none;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;position:absolute;right:16px;top:50%;transform:translateY(-50%)}
+@keyframes spin{to{transform:translateY(-50%) rotate(360deg)}}
+.btn.loading .spinner{display:block}
+.btn.loading .btn-text{opacity:0}
+
+.divider{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:12px;margin-bottom:14px}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
+
+.reg-link{text-align:center;font-size:13px;color:var(--muted)}
+.reg-link a{color:var(--accent);text-decoration:none}
+.reg-link a:hover{text-decoration:underline}
+
+/* JWT info badge */
+.jwt-hint{background:rgba(79,142,247,.06);border:1px solid rgba(79,142,247,.15);border-radius:8px;padding:10px 13px;font-size:11.5px;color:#7a9ee0;margin-bottom:18px;display:flex;align-items:center;gap:8px}
+
+.toast{position:fixed;bottom:24px;right:24px;padding:12px 16px;border-radius:10px;font-size:13px;display:flex;align-items:center;gap:8px;transform:translateY(70px);opacity:0;transition:all .3s ease;z-index:9999;box-shadow:0 8px 30px rgba(0,0,0,.5)}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success{background:#132219;border:1px solid rgba(82,201,138,.25);color:var(--success)}
+.toast.error{background:#231313;border:1px solid rgba(240,106,106,.25);color:var(--error)}
+
+@media(max-width:480px){.card{padding:32px 22px;border-radius:0;min-height:100vh;box-shadow:none}}
+</style>
+</head>
+<body>
+<div class="bg-fx"><span></span><span></span></div>
+
+<div class="card">
+  <div class="brand">
+    <div class="brand-mark">⚡</div>
+    <span class="brand-name">TaskVault</span>
+  </div>
+
+  <div class="form-head">
+    <h1>Welcome back</h1>
+    <p>Don't have an account? <a href="register.html">Register free</a></p>
+  </div>
+
+  <div class="jwt-hint">🔑 Token stored securely &amp; sent via <code>Authorization: Bearer &lt;token&gt;</code></div>
+
+  <div class="field" id="f-email">
+    <div class="field-header"><label for="email">Email address</label></div>
+    <input type="email" id="email" placeholder="jane@example.com" autocomplete="email">
+    <div class="field-err">Enter a valid email</div>
+  </div>
+
+  <div class="field" id="f-pw">
+    <div class="field-header">
+      <label for="pw">Password</label>
+      <a class="forgot" href="#">Forgot password?</a>
+    </div>
+    <div class="pw-wrap">
+      <input type="password" id="pw" placeholder="Your password" autocomplete="current-password">
+      <button class="pw-eye" type="button" onclick="togglePw()">👁</button>
+    </div>
+    <div class="field-err">Password is required</div>
+  </div>
+
+  <label class="remember">
+    <input type="checkbox" id="remember"> Keep me signed in
+  </label>
+
+  <button class="btn" id="login-btn" onclick="handleLogin()">
+    <span class="btn-text">Sign In</span>
+    <span class="spinner"></span>
+  </button>
+
+  <div class="divider">or</div>
+  <div class="reg-link">New to TaskVault? <a href="register.html">Create an account</a></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API_BASE = 'http://localhost:5000/api/v1';
+
+// Redirect if already logged in
+if (localStorage.getItem('tv_token')) location.href = 'dashboard.html';
+
+function togglePw() {
+  const inp = document.getElementById('pw');
+  const btn = document.querySelector('.pw-eye');
+  const show = inp.type === 'password';
+  inp.type = show ? 'text' : 'password';
+  btn.textContent = show ? '🙈' : '👁';
+}
+
+function toast(msg, type = 'error') {
+  const el = document.getElementById('toast');
+  el.textContent = (type === 'success' ? '✓  ' : '✗  ') + msg;
+  el.className = `toast ${type} show`;
+  setTimeout(() => el.classList.remove('show'), 3600);
+}
+
+function setLoading(on) {
+  const btn = document.getElementById('login-btn');
+  btn.classList.toggle('loading', on);
+  btn.disabled = on;
+}
+
+async function handleLogin() {
+  const email = document.getElementById('email').value.trim();
+  const pw    = document.getElementById('pw').value;
+  const remember = document.getElementById('remember').checked;
+
+  const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const pwOk    = pw.length > 0;
+
+  document.getElementById('f-email').classList.toggle('err', !emailOk);
+  document.getElementById('f-pw').classList.toggle('err', !pwOk);
+  if (!emailOk || !pwOk) return;
+
+  setLoading(true);
+  try {
+    const res  = await fetch(`${API_BASE}/auth/login`, {
+      method : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body   : JSON.stringify({ email, password: pw })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Invalid credentials');
+
+    // Store JWT + user info
+    const storage = remember ? localStorage : sessionStorage;
+    storage.setItem('tv_token', data.token);
+    storage.setItem('tv_user',  JSON.stringify(data.user || { email }));
+    // Always keep in localStorage for dashboard detection
+    localStorage.setItem('tv_token', data.token);
+    localStorage.setItem('tv_user',  JSON.stringify(data.user || { email }));
+
+    toast('Login successful! Redirecting…', 'success');
+    setTimeout(() => location.href = 'dashboard.html', 1200);
+  } catch (err) {
+    toast(err.message);
+  } finally {
+    setLoading(false);
+  }
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Enter') handleLogin(); });
+</script>
+</body>
+</html>
